@@ -3,36 +3,26 @@ class GildedRose
     @items = items
   end
 
-  def update_quality()
+  def update_quality
     @items.each do |item|
-      case item.name
-      when 'Aged Brie'
-        quality = item.sell_in.positive? ? 1 : 2
-        item.increase_quality(quality)
-        item.decrease_sell_in
-      when 'Backstage passes to a TAFKAL80ETC concert'
-        number_decrease = if item.sell_in > 10
-                            1
-                          elsif item.sell_in > 5
-                            2
-                          elsif item.sell_in > 0
-                            3
-                          end
-        quality = item.sell_in.positive? ? number_decrease : -50
-        item.increase_quality(quality)
-        item.decrease_sell_in
-      when 'Sulfuras, Hand of Ragnaros'
-        next
-      else
-        item.decrease_sell_in
-        item.decrease_quality
-      end
+      item.on_update_quality =
+        case item.name
+        when 'Aged Brie'
+          AgedBrieCommand.new(item)
+        when 'Backstage passes to a TAFKAL80ETC concert'
+          BackstageCommand.new(item)
+        when 'Sulfuras, Hand of Ragnaros'
+          SulfurasCommand.new(item)
+        else
+          CommandUpdateItem.new(item)
+        end
+      item.update_quality
     end
   end
 end
 
 class Item
-  attr_accessor :name, :sell_in, :quality
+  attr_accessor :name, :sell_in, :quality, :on_update
 
   MAX_QUALITY = 50
   MIN_QUALITY = 0
@@ -51,16 +41,69 @@ class Item
     "#{@name}, #{@sell_in}, #{@quality}"
   end
 
+  def on_update_quality=(command)
+    @on_update = command
+  end
+
+  def update_quality
+    @on_update.execute if @on_update.is_a? CommandUpdateItem
+  end
+end
+
+class CommandUpdateItem
+  def initialize(item)
+    @item = item
+  end
+
+  def execute
+    decrease_quality
+    decrease_sell_in
+  end
+
   def decrease_quality(number = 1)
-    number_decrease = @sell_in >= 0 ? number : number * 2
-    @quality =  @quality > number_decrease ? @quality - number_decrease : MIN_QUALITY
+    number = @item.sell_in.positive? ? number : number * 2
+    @item.quality =  @item.quality > number ? @item.quality - number : Item::MIN_QUALITY
   end
 
   def increase_quality(number = 1)
-    @quality = @quality <= (MAX_QUALITY - number) ?  @quality + number : MAX_QUALITY
+    @item.quality = @item.quality <= (Item::MAX_QUALITY - number) ?  @item.quality + number : Item::MAX_QUALITY
   end
 
   def decrease_sell_in(number = 1)
-    @sell_in -= number
+    @item.sell_in -= number
+  end
+end
+
+class AgedBrieCommand < CommandUpdateItem
+  def execute
+    quality_number = @item.sell_in.positive? ? 1 : 2
+
+    increase_quality(quality_number)
+    decrease_sell_in
+  end
+end
+
+class BackstageCommand < CommandUpdateItem
+  def execute
+    increase_quality(quality_number)
+    decrease_sell_in
+  end
+
+  def quality_number
+    if @item.sell_in > 10
+      return 1
+    elsif @item.sell_in > 5
+      return 2
+    elsif @item.sell_in > 0
+      return 3
+    else
+      return -Item::MAX_QUALITY
+    end
+  end
+end
+
+class SulfurasCommand < CommandUpdateItem
+  def execute
+    @item.quality
   end
 end
