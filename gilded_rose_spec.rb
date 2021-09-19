@@ -21,7 +21,7 @@ describe GildedRose do
         item = Item.new('foo', sell_in, quality)
         GildedRose.new([item]).update_quality
 
-        expect(item.quality).to eq(quality / 2)
+        expect(item.quality).to eq(quality - 2)
         expect(item.sell_in).to eq(sell_in - 1)
       end
 
@@ -70,7 +70,7 @@ describe GildedRose do
         expect(item.sell_in).to eq(0)
       end
 
-      it 'when item has sell_in zero day ' do
+      it 'when item has sell_in one day ' do
         sell_in = 0
         quality = 10
 

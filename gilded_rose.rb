@@ -5,48 +5,27 @@ class GildedRose
 
   def update_quality()
     @items.each do |item|
-      if item.name != "Aged Brie" and item.name != "Backstage passes to a TAFKAL80ETC concert"
-        if item.quality > 0
-          if item.name != "Sulfuras, Hand of Ragnaros"
-            item.quality = item.quality - 1
-          end
-        end
+      case item.name
+      when 'Aged Brie'
+        quality = item.sell_in.positive? ? 1 : 2
+        item.increase_quality(quality)
+        item.decrease_sell_in
+      when 'Backstage passes to a TAFKAL80ETC concert'
+        number_decrease = if item.sell_in > 10
+                            1
+                          elsif item.sell_in > 5
+                            2
+                          elsif item.sell_in > 0
+                            3
+                          end
+        quality = item.sell_in.positive? ? number_decrease : -50
+        item.increase_quality(quality)
+        item.decrease_sell_in
+      when 'Sulfuras, Hand of Ragnaros'
+        next
       else
-        if item.quality < 50
-          item.quality = item.quality + 1
-          if item.name == "Backstage passes to a TAFKAL80ETC concert"
-            if item.sell_in < 11
-              if item.quality < 50
-                item.quality = item.quality + 1
-              end
-            end
-            if item.sell_in < 6
-              if item.quality < 50
-                item.quality = item.quality + 1
-              end
-            end
-          end
-        end
-      end
-      if item.name != "Sulfuras, Hand of Ragnaros"
-        item.sell_in = item.sell_in - 1
-      end
-      if item.sell_in < 0
-        if item.name != "Aged Brie"
-          if item.name != "Backstage passes to a TAFKAL80ETC concert"
-            if item.quality > 0
-              if item.name != "Sulfuras, Hand of Ragnaros"
-                item.quality = item.quality - 1
-              end
-            end
-          else
-            item.quality = item.quality - item.quality
-          end
-        else
-          if item.quality < 50
-            item.quality = item.quality + 1
-          end
-        end
+        item.decrease_sell_in
+        item.decrease_quality
       end
     end
   end
@@ -55,17 +34,33 @@ end
 class Item
   attr_accessor :name, :sell_in, :quality
 
+  MAX_QUALITY = 50
+  MIN_QUALITY = 0
+
   def initialize(name, sell_in, quality)
     @name = name
     @sell_in = sell_in
     @quality = quality
   end
-  
+
   def to_h
     { name: @name, sell_in: @sell_in, quality: @quality }
   end
 
   def to_s()
     "#{@name}, #{@sell_in}, #{@quality}"
+  end
+
+  def decrease_quality(number = 1)
+    number_decrease = @sell_in >= 0 ? number : number * 2
+    @quality =  @quality > number_decrease ? @quality - number_decrease : MIN_QUALITY
+  end
+
+  def increase_quality(number = 1)
+    @quality = @quality <= (MAX_QUALITY - number) ?  @quality + number : MAX_QUALITY
+  end
+
+  def decrease_sell_in(number = 1)
+    @sell_in -= number
   end
 end
