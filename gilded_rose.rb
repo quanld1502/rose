@@ -13,6 +13,8 @@ class GildedRose
           BackstageCommand.new(item)
         when 'Sulfuras, Hand of Ragnaros'
           SulfurasCommand.new(item)
+        when 'Conjured Mana Cake'
+          ConjuredCommand.new(item)
         else
           CommandUpdateItem.new(item)
         end
@@ -105,5 +107,12 @@ end
 class SulfurasCommand < CommandUpdateItem
   def execute
     @item.quality
+  end
+end
+
+class ConjuredCommand < CommandUpdateItem
+  def execute
+    decrease_quality(2)
+    decrease_sell_in
   end
 end

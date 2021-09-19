@@ -82,8 +82,8 @@ describe GildedRose do
       end
     end
 
-    context 'when the item has name Sulfuras' do
-      it 'the item Sulfuras never has to be sold or decreases in quality' do
+    context 'when an item has name Sulfuras' do
+      it 'an item Sulfuras never has to be sold or decreases in quality' do
         sell_in = 10
         quality = 80
 
@@ -95,7 +95,7 @@ describe GildedRose do
       end
     end
 
-    context 'when the item has name Backstage passes' do
+    context 'when an item has name Backstage passes' do
       it 'when sell_in is zero' do
         sell_in = 0
         quality = 50
@@ -126,6 +126,30 @@ describe GildedRose do
         GildedRose.new([item]).update_quality
 
         expect(item.quality).to eq(quality + 3)
+        expect(item.sell_in).to eq(sell_in - 1)
+      end
+    end
+
+    context 'when an item has name conjured' do
+      it 'when sell_in positive' do
+        sell_in = 10
+        quality = 40
+
+        item = Item.new('Conjured Mana Cake', sell_in, quality)
+        GildedRose.new([item]).update_quality
+
+        expect(item.quality).to eq(quality - 2)
+        expect(item.sell_in).to eq(sell_in - 1)
+      end
+
+      it 'when sell_in is zero' do
+        sell_in = 0
+        quality = 10
+
+        item = Item.new('Conjured Mana Cake', sell_in, quality)
+        GildedRose.new([item]).update_quality
+
+        expect(item.quality).to eq(quality - 4)
         expect(item.sell_in).to eq(sell_in - 1)
       end
     end
